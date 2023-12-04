@@ -98,7 +98,7 @@ const LINES = [
     "Game 97: 8 green, 6 red; 1 blue, 6 red, 10 green; 1 blue, 6 red",
     "Game 98: 2 green, 8 red, 1 blue; 9 green, 2 blue, 7 red; 1 blue, 2 red, 11 green; 8 red, 10 green, 2 blue",
     "Game 99: 3 blue, 2 red; 1 blue, 3 green, 3 red; 1 red, 3 green; 2 green, 2 red, 2 blue",
-    "Game 100: 7 blue, 6 red, 5 green; 3 blue, 13 green, 11 red; 6 red, 13 green, 14 blue; 8 red, 10 blue, 15 green;",
+    "Game 100: 7 blue, 6 red, 5 green; 3 blue, 13 green, 11 red; 6 red, 13 green, 14 blue; 8 red, 10 blue, 15 green",
 ];
 
 const MAX_VALUES = {
@@ -107,18 +107,43 @@ const MAX_VALUES = {
     blue: 14
 };
 
-const isValidGame = (line) => {
+const getResult = (line) => {
     const { 1: id, 2: data } = /Game (\d*): (.*)/.exec(line);
     const games = data.split(';').map(game => game.trim());
-    return games.every(game => {
+
+    const result = {
+        possible: true,
+        id: parseInt(id),
+        red: 0,
+        green: 0,
+        blue: 0
+    };
+
+    games.forEach(game => {
         const matches = [...game.matchAll(/(\d+) (blue|red|green)/g)];
-        return matches.every(match => match[1] <= MAX_VALUES[match[2]])
-    }) ? parseInt(id) : undefined;
+        matches.forEach(match => {
+            const colour = match[2];
+            const count = parseInt(match[1]);
+            if (count > MAX_VALUES[colour]) {
+                result.possible = false;
+            }
+
+            if (count > result[colour]) {
+                result[colour] = count;
+            }
+        });        
+    });
+
+    return result;
 };
 
-const code = LINES.reduce((acc, line) => {
-    const id = isValidGame(line);
-    return acc + (id ? id : 0);
-}, 0);
+const code = LINES.reduce(({ idSum, power }, line) => {
+    const { possible, id, red, green, blue } = getResult(line);
+    return {
+        idSum: possible ? idSum + id : idSum,
+        power: power + (red * green * blue),
+    };
+}, { idSum: 0, power: 0});
 
 console.log(code);
+
