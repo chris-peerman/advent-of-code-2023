@@ -203,17 +203,39 @@ const CARDS = [
     "Card 202: 92 67 16 37 19  9  2 74 41 34 | 96 13 70 82 48 27 58 17 14 61 18 81 43 15 32 69 80 76 31 47 84 90 40 75 60",
 ];
 
-const getScore = (line) => {
-    const { 1: card, 2: winningStr, 3: allStr } = /^Card *(\d+): ([\d ]*) \| ([\d ]*$)/.exec(line);
+const lineRegEx = /^Card *(\d+): ([\d ]*) \| ([\d ]*$)/;
+
+const getMatches = (line) => {
+    const { 2: winningStr, 3: allStr } = lineRegEx.exec(line);
     const winningNumbers = [...winningStr.matchAll(/\d+/g)].map(num => parseInt(num[0]));
     const allNumbers = [...allStr.matchAll(/\d+/g)].map(num => parseInt(num[0]));
-    const matchingNumbers = winningNumbers.filter(num => allNumbers.includes(num));
-
-    return matchingNumbers.length > 0 ? (1 << (matchingNumbers.length - 1)) : 0;
+    return winningNumbers.filter(num => allNumbers.includes(num));
 };
 
-const total = CARDS.reduce((acc, line)  => {
-    return acc + getScore(line);
+const question1Score = CARDS.reduce((acc, line)  => {
+    const matchingNumbers = getMatches(line);
+    const score =  matchingNumbers.length > 0 ? (1 << (matchingNumbers.length - 1)) : 0;
+
+    return acc + score;
 }, 0);
 
-console.log(total);
+const winningLookup = CARDS.reduce((acc, line) => {
+    const { 1: card } = lineRegEx.exec(line);
+    acc[card] = { matches: getMatches(line) };
+    return acc;
+}, {});
+
+const createCards = (start, length) => new Array(length).fill(0).map((a, index) => index + start);
+
+let winners = CARDS.length;
+const occurance = {};
+for(let cardsInHand = createCards(1, winners); cardsInHand.length > 0;) {
+    const currentCard = cardsInHand.pop();
+    occurance[currentCard] = (occurance[currentCard] || 0) + 1;
+    const winningNumbersLength = winningLookup[currentCard].matches.length;
+    winners += winningNumbersLength;
+    cardsInHand.push(...createCards(currentCard + 1, winningNumbersLength));
+}
+
+console.log("Question 1: ", question1Score);
+console.log("Question 2: ", winners);
