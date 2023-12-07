@@ -1001,21 +1001,8 @@ const INPUT_FINAL = [
     "Q7QQJ 572",
 ]
 
-const LOOKUP = {
-    "2": 0,
-    "3": 1,
-    "4": 2,
-    "5": 3,
-    "6": 4,
-    "7": 5,
-    "8": 6,
-    "9": 7,
-    "T": 8,
-    "J": 9,
-    "Q": 10,
-    "K": 11,
-    "A": 12,
-}
+const SYMBOL_LOOKUP = "J23456789TQKA"; // Part 1
+const LOOKUP = [...SYMBOL_LOOKUP].reduce((acc, card, index) => ({...acc, [card]: index}), {});
 
 const INPUT_TEST = [
     "32T3K 765",
@@ -1033,6 +1020,23 @@ const getNumberOfPairs = (cards) => {
     const pairs = [...cards].reduce((acc, card) => {
         return { ...acc, [card]: acc[card] ? acc[card] + 1 : 1 };
     }, {});
+
+    if (pairs.hasOwnProperty('J')) {
+        let bestCard = null;
+        let bestTotal = null;
+        for(const card of Object.keys(pairs)) {
+            if (card === 'J') continue;
+            if (bestCard === null || bestTotal < pairs[card]) {
+                bestCard = card;
+                bestTotal = pairs[card];
+            }
+        }
+
+        if (bestCard) {
+            pairs[bestCard] += pairs['J'];
+            delete pairs['J'];
+        }
+    }
 
     switch (Object.keys(pairs).length) {
         case 1: return 6;
@@ -1064,6 +1068,5 @@ const getSortedRows = (input) => input.map(parseLine).sort(sortRows);
 
 const calculateScore = (input) => 
     getSortedRows(input).reduce((acc, row, index) => (acc + (parseInt(row[1], 10) * (index + 1))), 0);
-
 
 console.log(calculateScore(INPUT_FINAL));
